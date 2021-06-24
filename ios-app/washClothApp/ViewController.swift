@@ -12,6 +12,7 @@ class ViewController: UIViewController {
     var washing = 0
     var startWashingTime : Date?
     
+    
     @IBOutlet weak var doingText1: UILabel!
     
     @IBOutlet weak var doingText2: UILabel!
@@ -24,14 +25,14 @@ class ViewController: UIViewController {
     
     @IBOutlet weak var finishImage: UIImageView!
     
+    @IBAction func updateState(_ sender: Any) {
+        requestState()
+    }
     
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        // Do any additional setup after loading the view.
+    func requestState (){
         //1325696 test
         //1339958 official
-let url = URL(string: "https://api.thingspeak.com/channels/1339958/fields/1/last.json")!
-        
+        let url = URL(string: "https://api.thingspeak.com/channels/1339958/fields/1/last.json")!
         
 
         let task = URLSession.shared.dataTask(with: url) {(data, response, error) in
@@ -39,77 +40,87 @@ let url = URL(string: "https://api.thingspeak.com/channels/1339958/fields/1/last
             let json = try?JSONSerialization.jsonObject(with: data, options: [])
             
             if let dictionary = json as? [String: Any] {
-//                if let field1 = dictionary["field1"] as? String {
-//                    updateImg(washing: field1);
-//                }
-                if let created_at = dictionary["created_at"] as? String {
-                    let dateFormatter = DateFormatter()
-                    dateFormatter.locale = .init(identifier: "en_US_POSIX")
-                    dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
-                    
-//                    print(created_at);
-                    self.startWashingTime = dateFormatter.date(from: created_at)
-//                    print(self.startWashingTime)
-                    washingDetected( startWashingTime : self.startWashingTime! )
-                    updateImg()
-                   
-                }
-            
-            }
+               
+                
+                if let field1 = dictionary["field1"] as? String {
+                    if field1 == "0" {
+                        self.washing = 0;
+                    }else if field1 == "1" {
+                        self.washing = 1;
+                        if let created_at = dictionary["created_at"] as? String {
+                            let dateFormatter = DateFormatter()
+                            dateFormatter.locale = .init(identifier: "en_US_POSIX")
+                            dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
+                            
+        //                    print(created_at);
+                            self.startWashingTime = dateFormatter.date(from: created_at)
+        //                    print(self.startWashingTime)
+                            self.washingDetected( startWashingTime : self.startWashingTime! )
 
-           
+                        }
+                    }
+                    self.updateImg()
+                }
+            }
             
+           
         }
- 
         task.resume()
         
-        func washingDetected(startWashingTime: Date){
-                DispatchQueue.main.async{
-               
-                    let timeDiff = Int(2700 + floor(startWashingTime.timeIntervalSinceNow))
-                    
-                    if timeDiff < 0 {
-                        self.washing = 0;
-                        self.doingTime.text = "00:00"
-                       
-                    }else{
-                        self.washing = 1;
-                        self.doingTime.text = String(timeDiff / 60) + ":" + String(timeDiff % 60)
-                    }
+       
+    }
+    
+    func washingDetected(startWashingTime: Date){
+            DispatchQueue.main.async{
+           
+                let timeDiff = Int(2700 + floor(startWashingTime.timeIntervalSinceNow))
                 
-            }
-        }
-        
-        func updateImg(){
-                DispatchQueue.main.async{
-               
-                    if( self.washing == 1){
+                if timeDiff < 0 {
+                 
+                    self.doingTime.text = "00:00"
                    
-                    self.doingText1.isHidden = false;
-                    self.doingText2.isHidden = false;
-                    self.doingTime.isHidden = false;
-                    self.doingImage.isHidden = false;
-                    
-                    self.finishText.isHidden = true;
-                    self.finishImage.isHidden = true;
-                    
-
                 }else{
-                    self.doingText1.isHidden = true;
-                    self.doingText2.isHidden = true;
-                    self.doingTime.isHidden = true;
-                    self.doingImage.isHidden = true;
-                    
-                    self.finishText.isHidden = false;
-                    self.finishImage.isHidden = false;
-                    
+                
+                    self.doingTime.text = String(timeDiff / 60) + ":" + String(timeDiff % 60)
                 }
+            
+        }
+    }
+    
+    func updateImg(){
+            DispatchQueue.main.async{
+           
+                if( self.washing == 1){
+               
+                self.doingText1.isHidden = false;
+                self.doingText2.isHidden = false;
+                self.doingTime.isHidden = false;
+                self.doingImage.isHidden = false;
+                
+                self.finishText.isHidden = true;
+                self.finishImage.isHidden = true;
+                
+
+            }else{
+                self.doingText1.isHidden = true;
+                self.doingText2.isHidden = true;
+                self.doingTime.isHidden = true;
+                self.doingImage.isHidden = true;
+                
+                self.finishText.isHidden = false;
+                self.finishImage.isHidden = false;
                 
             }
+            
         }
-        
-        
-        
+    }
+    
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        // Do any additional setup after loading the view.
+
+       requestState()
     }
     
 }
